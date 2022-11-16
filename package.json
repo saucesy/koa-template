@@ -2,9 +2,13 @@
   "name": "koa-template",
   "version": "1.0.0",
   "description": "Rapid development template based on Koajs.",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "clean": "rimraf dist",
+    "dev": "nodemon bin/index.js",
+    "lint": "eslint src/**/*.js --fix",
+    "serve": "node dist/index.js",
+    "build": "npm run lint && npm run clean && rollup -c rollup.config.js"
   },
   "repository": {
     "type": "git",
@@ -22,13 +26,18 @@
     "@babel/preset-env": "^7.20.2",
     "@rollup/plugin-babel": "^6.0.2",
     "@rollup/plugin-commonjs": "^23.0.2",
+    "@rollup/plugin-eslint": "^9.0.1",
     "@rollup/plugin-node-resolve": "^15.0.1",
     "@rollup/plugin-terser": "^0.1.0",
+    "dotenv": "^16.0.3",
+    "eslint": "^8.27.0",
+    "nodemon": "^2.0.20",
+    "rimraf": "^3.0.2",
     "rollup": "^3.3.0",
     "rollup-plugin-filesize": "^9.1.2"
   },
   "dependencies": {
-    "ke-validator": "^1.6.7",
+    "ke-validator": "^1.6.10",
     "koa": "^2.13.4",
     "koa-body": "^6.0.1",
     "koa-helmet": "^6.1.0",
