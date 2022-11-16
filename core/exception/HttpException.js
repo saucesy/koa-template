@@ -1,9 +1,9 @@
-class RegisterException extends Error{
-  constructor(message) {
+class HttpException extends Error{
+  constructor({code, message}) {
     super();
-    this.code = 10001;
-    this.message = message || "注册失败";
+    this.code = code;
+    this.message = message;
   }
 }
 
-export default RegisterException;
+export default HttpException;
