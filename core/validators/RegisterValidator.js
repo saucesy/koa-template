@@ -1,4 +1,4 @@
-import {KeValidator, Rule} from "ke-validator";
+import {KeValidator, Rule} from "ke-validator/es/index.js";
 
 class RegisterValidator extends KeValidator {
   constructor() {
@@ -18,12 +18,6 @@ class RegisterValidator extends KeValidator {
         options: {min: 6, max: 24}
       })
     ];
-    
-    this.repassword = function (row) {
-      if (row.repassword !== row.password) {
-        throw new Error("两次密码输入不一致，请重新输入");
-      }
-    };
   }
 }
 
