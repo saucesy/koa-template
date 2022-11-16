@@ -7,6 +7,7 @@ import path from "path";
 /**
  * external module
  */
+import Koa from "koa";
 import dotenv from "dotenv";
 import Router from "koa-router";
 import {koaBody} from "koa-body";
@@ -15,7 +16,7 @@ import {Sequelize} from "sequelize";
 /**
  * internal module
  */
-import catchException from "../core/middleware/catch-exception.js";
+import catchException from "../middleware/catch-exception.js";
 
 class App {
   static routers = [];
@@ -23,18 +24,26 @@ class App {
   static baseRouter = new Router({prefix: "/v1"});
   
   /**
-   * 应用启动入口
+   * Application launch entry
    * @param context
-   * @return {Promise<void>}
+   * @return {Promise<Koa>}
    */
-  static async launch(context) {
-    App.initConfig();
-    await App.initRouter();
-    App.initMiddleware(context);
+  static launch(context) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        App.initConfig();
+        App.initConnection();
+        await App.initRouter();
+        App.initMiddleware(context);
+        resolve(context);
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
   
   /**
-   * 初始化配置
+   * initialize configuration
    * @private
    */
   static initConfig() {
@@ -56,29 +65,30 @@ class App {
   }
   
   /**
-   * 初始化路由
+   * initialize router controller
    * @private
    */
   static async initRouter() {
-    const routerRoot = path.resolve(global.dir(import.meta.url), "../controller");
+    const routerRoot = path.resolve(process.cwd(), "controller");
     const routerRootFile = url.pathToFileURL(routerRoot).href;
     
     const files = fs.readdirSync(routerRoot);
     for (const file of files) {
-      // 实例化一个router对象
+      // instantiate router object
       const router = new Router();
-      // 导入控制器
+      // import routing controller
       const Controller = (await import(routerRootFile + "/" + file)).default;
-      // 为路由添加前缀
+      // prefix the routing controller
       router.prefix(Controller.prefix || "");
-      // 实例化控制器
+      // instantiate routing controller
       const controller = new Controller();
       Object.keys(controller).forEach((key) => {
-        // 请求路径
+        // path of request
         const path = key;
-        // 请求方法
+        // method of request
         const method = controller[key].toLowerCase();
-        // 调用router对象，将Controller构造函数原型上对应的方法作为该router对象的回调函数
+        // Call the router object and use the corresponding method on
+        // the Controller constructor prototype as the callback function for the router object
         router[method]("/" + path, Controller.prototype[key]);
       });
       App.routers.push(router);
@@ -88,38 +98,43 @@ class App {
   }
   
   /**
-   * 初始化中间件
+   * initialize middleware
    * @param context
    * @private
    */
   static initMiddleware(context) {
-    // 解析请求体
+    // Parse the request body
     context.use(koaBody());
-    // 安全响应头
+    // Safety response header
     context.use(koaHelmet());
-    // 全局异常捕获
+    // Global exception catch
     context.use(catchException());
-    // 路由
+    // Routing controller
     context.use(App.baseRouter.routes());
   }
   
   /**
-   * 初始化 Sequelize
+   * initialize database connection
    * @return {null}
    */
-  static initSequelize() {
-    if (!App.sequelize) {
-      App.sequelize = new Sequelize(
-        process.env.DATABASE,
-        process.env.DATABASE_USERNAME,
-        process.env.DATABASE_PASSWORD,
-        {
-          logging: false,
-          dialect: "mysql",
-          host: process.env.HOST,
-        }
-      );
-    }
+  static initConnection() {
+    App.sequelize = new Sequelize(
+      process.env.DATABASE_NAME,
+      process.env.DATABASE_USERNAME,
+      process.env.DATABASE_PASSWORD,
+      {
+        logging: false,
+        host: process.env.HOST,
+        dialect: process.env.DATABASE
+      }
+    );
+  }
+  
+  /**
+   * get database connection
+   * @return {Sequelize}
+   */
+  static getConnection() {
     return App.sequelize;
   }
 }
